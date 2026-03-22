@@ -34,18 +34,18 @@ The objective is to monitor a proxy server handling SSL offloading for roughly 2
 ### 1. Key Metrics to Monitor
 For a high-traffic proxy server, I would focus on monitoring the following key areas:
 
-* **CPU Usage:** SSL/TLS encryption requires a lot of processing power. I would monitor overall CPU usage to ensure the 4 CPUs aren't maxing out under the load of 25,000 requests per second.
-* **Disk I/O:** Since the server uses a 2TB HDD (a mechanical drive) instead of an SSD, monitoring disk write speeds and I/O wait times is very important to make sure the disk isn't slowing down the system.
+* **CPU Usage:** SSL/TLS encryption requires a lot of processing power. I would monitor overall CPU usage to ensure the 4 CPUs aren't maxing out under the heavy load.
+* **Disk I/O:** Since the server uses a 2TB HDD (a mechanical drive) instead of an SSD, monitoring disk write speeds and disk **latency** (I/O wait times) is very important to make sure the disk isn't slowing down the system.
 * **Network Traffic:** Monitoring incoming and outgoing bandwidth (Gbps) to ensure we aren't hitting the limits of the 10Gbit/s network cards.
-* **Application Metrics:** Requests Per Second (RPS), response times, and HTTP error rates (like 502 Bad Gateway or 504 Gateway Timeout) to ensure the proxy is actually serving user traffic successfully.
+* **Application Metrics:** We need to track the exact Requests Per Second (**RPS**), request **latency** (how fast the proxy replies to users), and HTTP error rates (like 502 Bad Gateway) to ensure the proxy is serving traffic successfully.
 
 ### 2. How to Monitor
 A standard and effective industry approach is using **Prometheus and Grafana**:
 
-* **Collection (Prometheus):** I would install an agent like `node_exporter` on the server to gather hardware and OS stats (CPU, RAM, Disk, Network). I would also use a web-specific exporter (like the Nginx ) to gather the application stats like active connections and error rates.
-* **Visualization (Grafana):** Prometheus would collect these metrics, and Grafana would visualize them on dashboards, making it easy for the NOC team to spot traffic spikes or outages.
-* **Alerting:** I would set up basic alerts to notify the team if the CPU stays above 85% for too long, or if the HTTP 5xx error rate suddenly spikes.
+* **Collection (Prometheus):** I would install an agent like `node_exporter` on the server to gather hardware stats (CPU, RAM, Disk). I would also use a web-specific exporter (like the Nginx exporter) to gather application stats like **RPS** and active connections.
+* **Visualization (Grafana):** Prometheus would collect these metrics, and Grafana would visualize them on dashboards, making it easy for the NOC team to spot traffic spikes or high **latency**.
+* **Alerting:** Proactive **alerting** is critical. I would set up automated alerts to notify the team immediately if the CPU stays above 85% for too long, if **latency** spikes abnormally, or if the HTTP 5xx error rate crosses a certain threshold.
 
 ### 3. Challenges of Monitoring This Server
-* **The Hard Drive Bottleneck:** The biggest challenge is the 2TB HDD. Mechanical hard drives have relatively slow read/write speeds. If the server tries to write a traditional access log to the disk for every single one of the 25,000 requests per second, the disk will become overloaded and slow down the whole server. A solution would be to reduce log verbosity, buffer logs, or send them over the network to a central logging server instead of saving them locally.
-* **High CPU Load from SSL:** Handling 25,000 SSL handshakes per second is heavy on the processor. It can be challenging to monitor whether a sudden spike in CPU usage is just a legitimate surge of new users, or if it is a volumetric DDoS attack trying to exhaust the server's resources.
+* **The Hard Drive Bottleneck:** The biggest challenge is the 2TB HDD. Mechanical hard drives have relatively slow read/write speeds. If the server tries to write a traditional access log to the disk for every single request at 25,000 **RPS**, the disk will become overloaded. A solution would be to reduce log verbosity, buffer logs in memory, or send them over the network to a central logging server.
+* **High CPU Load from SSL:** Handling 25,000 SSL handshakes per second is heavy on the processor. It can be challenging to configure **alerting** so that it correctly distinguishes between a legitimate traffic surge and a volumetric DDoS attack trying to exhaust the server's resources.
