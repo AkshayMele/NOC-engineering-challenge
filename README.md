@@ -3,9 +3,9 @@
 ## Task 1: Random Number Generator
 
 ### Description
-This project contains a pure Bash script (`random_numbers.sh`) that outputs the numbers from 1 to 10 in a random order, ensuring each number appears exactly once. 
+This project contains a pure Bash script (`random_numbers.sh`) that outputs the numbers from 1 to 10 in a random order, ensuring each number appears only once. 
 
-To strictly stick to the "bash only" constraint, this solution intentionally avoids external GNU utilities (such as `shuf`, `sort -R`, or `seq`). Instead, it implements the **Fisher-Yates shuffle algorithm** using native Bash arrays and the internal `$RANDOM` variable. Following, a test script (`test_script.sh`) is also provided to validate the script's core logic and output.
+To strictly stick to the "bash only" constraint, this script intentionally avoids external GNU utilities (such as `shuf`, `sort -R`, or `seq`). Instead, it uses the **Fisher-Yates shuffle algorithm** using native Bash arrays and the internal `$RANDOM` variable. Following, a test script (`test_script.sh`) is also provided to validate the script's core logic and output.
 
 ### Build Instructions
 As these are interpreted Bash scripts, there is no need for compilation or traditional build process required. To prepare the scripts for execution, simply grant them the necessary permissions using:
