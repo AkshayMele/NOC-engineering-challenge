@@ -24,3 +24,28 @@ As these are interpreted Bash scripts, there is no need for compilation or tradi
 ### Known Limitations / Bugs
 * **Pseudo-Randomness:** The script relies on Bash's internal `$RANDOM` function. This is a pseudo-random number generator (PRNG) seeded by the system clock and the PID. While perfectly sufficient for general scripting and this specific challenge, it is not cryptographically secure.
 * **Performance at Scale:** Because this implementation uses pure, built-in Bash loops and variable swapping to satisfy the tool constraints, it is meant for small data sets (like 1-10). If the requirement were to scale to millions of integers, compiled utilities (like `shuf`) would be more memory and CPU efficient.
+
+
+## Task 2: Server Monitoring Architecture
+
+### Scenario Overview
+The objective is to monitor a proxy server handling SSL offloading for roughly 25,000 requests per second. The server has 4x Intel Xeon CPUs, 64GB RAM, a 2TB HDD, and 2x 10Gbit/s network cards.
+
+### 1. Key Metrics to Monitor
+For a high-traffic proxy server, I would focus on monitoring the following key areas:
+
+* **CPU Usage:** SSL/TLS encryption requires a lot of processing power. I would monitor overall CPU usage to ensure the 4 CPUs aren't maxing out under the load of 25,000 requests per second.
+* **Disk I/O:** Since the server uses a 2TB HDD (a mechanical drive) instead of an SSD, monitoring disk write speeds and I/O wait times is very important to make sure the disk isn't slowing down the system.
+* **Network Traffic:** Monitoring incoming and outgoing bandwidth (Gbps) to ensure we aren't hitting the limits of the 10Gbit/s network cards.
+* **Application Metrics:** Requests Per Second (RPS), response times, and HTTP error rates (like 502 Bad Gateway or 504 Gateway Timeout) to ensure the proxy is actually serving user traffic successfully.
+
+### 2. How to Monitor
+A standard and effective industry approach is using **Prometheus and Grafana**:
+
+* **Collection (Prometheus):** I would install an agent like `node_exporter` on the server to gather hardware and OS stats (CPU, RAM, Disk, Network). I would also use a web-specific exporter (like the Nginx ) to gather the application stats like active connections and error rates.
+* **Visualization (Grafana):** Prometheus would collect these metrics, and Grafana would visualize them on dashboards, making it easy for the NOC team to spot traffic spikes or outages.
+* **Alerting:** I would set up basic alerts to notify the team if the CPU stays above 85% for too long, or if the HTTP 5xx error rate suddenly spikes.
+
+### 3. Challenges of Monitoring This Server
+* **The Hard Drive Bottleneck:** The biggest challenge is the 2TB HDD. Mechanical hard drives have relatively slow read/write speeds. If the server tries to write a traditional access log to the disk for every single one of the 25,000 requests per second, the disk will become overloaded and slow down the whole server. A solution would be to reduce log verbosity, buffer logs, or send them over the network to a central logging server instead of saving them locally.
+* **High CPU Load from SSL:** Handling 25,000 SSL handshakes per second is heavy on the processor. It can be challenging to monitor whether a sudden spike in CPU usage is just a legitimate surge of new users, or if it is a volumetric DDoS attack trying to exhaust the server's resources.
